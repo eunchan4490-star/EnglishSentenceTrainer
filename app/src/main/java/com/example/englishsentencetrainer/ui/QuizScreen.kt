@@ -4,17 +4,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.englishsentencetrainer.quiz.AnswerState
 import com.example.englishsentencetrainer.quiz.QuizViewModel
+import com.example.englishsentencetrainer.translation.TranslationManager
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
+    val translationManager = remember { TranslationManager() }
+    DisposableEffect(Unit) { onDispose { translationManager.close() } }
     if (viewModel.completed) {
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp), Arrangement.Center, Alignment.CenterHorizontally) {
             Text("학습 완료", fontSize = 34.sp)
@@ -27,11 +30,42 @@ fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
         return
     }
 
+    var translation by remember(viewModel.currentIndex) { mutableStateOf<String?>(null) }
+    var translationFailed by remember(viewModel.currentIndex) { mutableStateOf(false) }
+    LaunchedEffect(viewModel.currentIndex) {
+        translationManager.translate(
+            viewModel.sentences[viewModel.currentIndex],
+            onSuccess = { translation = it },
+            onError = { translationFailed = true }
+        )
+    }
+
     Column(
         Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp)
     ) {
         Text("${viewModel.currentIndex + 1} / ${viewModel.sentences.size}", fontSize = 22.sp)
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(12.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Column(Modifier.padding(14.dp)) {
+                Text(
+                    when {
+                        translation != null -> translation!!
+                        translationFailed -> "번역 모델을 받을 수 없습니다. 인터넷 연결을 확인하세요."
+                        else -> "한국어 번역 준비 중…"
+                    },
+                    fontSize = 20.sp
+                )
+                if (translation != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("Powered by Google Translate", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                }
+            }
+        }
+        Spacer(Modifier.height(16.dp))
         Text("답안", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Surface(
             modifier = Modifier.fillMaxWidth().heightIn(min = 130.dp),
