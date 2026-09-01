@@ -109,46 +109,64 @@ fun JapaneseHandwritingQuizScreen(
             Text("영웅 ${"♥".repeat(heroHp)}", color = Color(0xFFC62828), fontSize = 17.sp)
             Text("보스 HP ${questions.size - index} / ${questions.size}", fontSize = 17.sp)
         }
-        Spacer(Modifier.height(6.dp))
-        Surface(
-            modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.secondaryContainer,
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Column(Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(if (showTarget) "아래 일본어 단어를 그대로 쓰세요" else "아래 음에 맞는 일본어 글자를 쓰세요", fontSize = 15.sp)
-                Text(question.prompt, fontSize = 36.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
-            }
-        }
         Spacer(Modifier.height(8.dp))
-        AndroidView(
-            factory = { HandwritingCanvasView(it).also { view -> canvasView.value = view } },
-            modifier = Modifier.fillMaxWidth().weight(1f).heightIn(min = 210.dp, max = 330.dp)
-                .border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
-        )
-        Spacer(Modifier.height(6.dp))
-        Text(message, fontSize = 16.sp, color = when (correct) {
-            true -> Color(0xFF2E7D32)
-            false -> MaterialTheme.colorScheme.error
-            null -> MaterialTheme.colorScheme.onSurfaceVariant
-        })
-        if (recognized.isNotBlank()) Text("인식 결과: $recognized", fontSize = 14.sp)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { clearWriting() }, modifier = Modifier.weight(1f).height(50.dp)) { Text("지우기") }
-            Button(
-                onClick = { if (correct == true) nextQuestion() else attack() },
-                enabled = !checking,
-                modifier = Modifier.weight(1.4f).height(50.dp)
+        Row(
+            Modifier.fillMaxWidth().height(190.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            AndroidView(
+                factory = { HandwritingCanvasView(it).also { view -> canvasView.value = view } },
+                modifier = Modifier.weight(1.05f).fillMaxHeight()
+                    .border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+            )
+            Column(
+                Modifier.weight(0.95f).fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(when {
-                    checking -> "인식 중"
-                    correct == true && index == questions.lastIndex -> "보스 처치"
-                    correct == true -> "다음 문제"
-                    else -> "단어 공격"
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(if (showTarget) "이 단어를 쓰세요" else "제시 음", fontSize = 14.sp)
+                        Text(
+                            displayPrompt(question.prompt, showTarget),
+                            fontSize = if (showTarget) 27.sp else 31.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2
+                        )
+                    }
+                }
+                Spacer(Modifier.height(5.dp))
+                Text(message, fontSize = 14.sp, textAlign = TextAlign.Center, color = when (correct) {
+                    true -> Color(0xFF2E7D32)
+                    false -> MaterialTheme.colorScheme.error
+                    null -> MaterialTheme.colorScheme.onSurfaceVariant
                 })
+                if (recognized.isNotBlank()) Text("인식: $recognized", fontSize = 13.sp, maxLines = 1)
+                Spacer(Modifier.weight(1f))
+                OutlinedButton(onClick = { clearWriting() }, modifier = Modifier.fillMaxWidth().height(43.dp)) {
+                    Text("지우기")
+                }
+                Spacer(Modifier.height(4.dp))
+                Button(
+                    onClick = { if (correct == true) nextQuestion() else attack() },
+                    enabled = !checking,
+                    modifier = Modifier.fillMaxWidth().height(43.dp)
+                ) {
+                    Text(when {
+                        checking -> "인식 중"
+                        correct == true && index == questions.lastIndex -> "보스 처치"
+                        correct == true -> "다음 문제"
+                        else -> "단어 공격"
+                    })
+                }
             }
         }
         Box(
-            Modifier.fillMaxWidth().height(105.dp).padding(top = 6.dp)
+            Modifier.fillMaxWidth().height(125.dp).padding(top = 4.dp)
                 .background(Color(0xFFF0E8F7), MaterialTheme.shapes.medium),
             contentAlignment = Alignment.Center
         ) {
@@ -183,3 +201,24 @@ private fun CompletionBattleScreen(total: Int, combo: Int, onBack: () -> Unit, o
 
 private fun normalize(value: String): String =
     Normalizer.normalize(value, Normalizer.Form.NFKC).replace(" ", "").trim()
+
+private fun displayPrompt(prompt: String, showTarget: Boolean): String {
+    if (showTarget) return prompt
+    val korean = mapOf(
+        "a" to "아", "i" to "이", "u" to "우", "e" to "에", "o" to "오",
+        "ka" to "카", "ki" to "키", "ku" to "쿠", "ke" to "케", "ko" to "코",
+        "sa" to "사", "shi" to "시", "su" to "스", "se" to "세", "so" to "소",
+        "ta" to "타", "chi" to "치", "tsu" to "쓰", "te" to "테", "to" to "토",
+        "na" to "나", "ni" to "니", "nu" to "누", "ne" to "네", "no" to "노",
+        "ha" to "하", "hi" to "히", "fu" to "후", "he" to "헤", "ho" to "호",
+        "ma" to "마", "mi" to "미", "mu" to "무", "me" to "메", "mo" to "모",
+        "ya" to "야", "yu" to "유", "yo" to "요", "ra" to "라", "ri" to "리",
+        "ru" to "루", "re" to "레", "ro" to "로", "wa" to "와", "wo" to "오", "n" to "응",
+        "ga" to "가", "gi" to "기", "gu" to "구", "ge" to "게", "go" to "고",
+        "za" to "자", "ji" to "지", "zu" to "즈", "ze" to "제", "zo" to "조",
+        "da" to "다", "de" to "데", "do" to "도", "ba" to "바", "bi" to "비",
+        "bu" to "부", "be" to "베", "bo" to "보", "pa" to "파", "pi" to "피",
+        "pu" to "푸", "pe" to "페", "po" to "포"
+    )[prompt] ?: prompt
+    return "$korean ($prompt)"
+}
