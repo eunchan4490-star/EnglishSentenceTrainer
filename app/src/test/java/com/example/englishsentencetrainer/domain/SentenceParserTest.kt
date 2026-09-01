@@ -12,4 +12,23 @@ class SentenceParserTest {
     @Test fun keepsContractionsAndPunctuationAttached() {
         assertEquals(listOf("Hello,", "I'm", "Tom."), SentenceParser.tokenize("Hello, I'm Tom."))
     }
+
+    @Test fun treatsUppercaseNewLineAsLikelyMissingPeriod() {
+        val text = "Many people use smartphones every day\nThey are very useful"
+        assertEquals(
+            listOf("Many people use smartphones every day", "They are very useful"),
+            SentenceParser.parse(text)
+        )
+    }
+
+    @Test fun splitsLongSentenceAtComma() {
+        val text = "Many students carry their smartphones to school every single day, teachers sometimes use these devices for useful classroom activities."
+        assertEquals(
+            listOf(
+                "Many students carry their smartphones to school every single day,",
+                "teachers sometimes use these devices for useful classroom activities."
+            ),
+            SentenceParser.parse(text)
+        )
+    }
 }

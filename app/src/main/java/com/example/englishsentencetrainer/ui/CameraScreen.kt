@@ -2,6 +2,8 @@ package com.example.englishsentencetrainer.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Matrix
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -26,6 +28,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.englishsentencetrainer.ocr.TextRecognitionManager
+import kotlin.math.roundToInt
 
 @Composable
 fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit) {
@@ -54,15 +57,55 @@ private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit) {
     val recognizer = remember { TextRecognitionManager() }
     var processing by remember { mutableStateOf(false) }
     var awaitingNextAction by remember { mutableStateOf(false) }
+    var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     val recognizedPages = remember { mutableStateListOf<String>() }
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
     DisposableEffect(Unit) {
         onDispose {
+            capturedBitmap?.recycle()
             if (cameraProviderFuture.isDone) cameraProviderFuture.get().unbindAll()
             recognizer.close()
         }
+    }
+
+    capturedBitmap?.let { bitmap ->
+        CropSelectionScreen(
+            bitmap = bitmap,
+            pageNumber = recognizedPages.size + 1,
+            processing = processing,
+            onRetake = {
+                bitmap.recycle()
+                capturedBitmap = null
+                error = null
+            },
+            onUseCrop = { left, top, right, bottom ->
+                processing = true
+                error = null
+                val cropped = cropBitmap(bitmap, left, top, right, bottom)
+                recognizer.recognize(
+                    cropped,
+                    onSuccess = { text ->
+                        processing = false
+                        cropped.recycle()
+                        bitmap.recycle()
+                        capturedBitmap = null
+                        if (text.isBlank()) error = "선택 영역에서 영어 본문을 찾지 못했습니다. 다시 촬영하세요."
+                        else {
+                            recognizedPages.add(text.trim())
+                            awaitingNextAction = true
+                        }
+                    },
+                    onError = {
+                        processing = false
+                        cropped.recycle()
+                        error = "문자 인식에 실패했습니다. 영역을 조절하거나 다시 촬영하세요."
+                    }
+                )
+            }
+        )
+        return
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -121,17 +164,17 @@ private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit) {
                         processing = true; error = null
                         imageCapture.takePicture(ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageCapturedCallback() {
                             override fun onCaptureSuccess(image: ImageProxy) {
-                                recognizer.recognize(image,
-                                    onSuccess = { text ->
-                                        processing = false
-                                        if (text.isBlank()) error = "영어 본문을 찾지 못했습니다. 다시 촬영하세요."
-                                        else {
-                                            recognizedPages.add(text.trim())
-                                            awaitingNextAction = true
-                                        }
-                                    },
-                                    onError = { processing = false; error = "문자 인식에 실패했습니다. 다시 촬영하세요." }
-                                )
+                                try {
+                                    val source = image.toBitmap()
+                                    capturedBitmap = rotateBitmap(source, image.imageInfo.rotationDegrees)
+                                    if (capturedBitmap !== source) source.recycle()
+                                    processing = false
+                                } catch (_: Exception) {
+                                    processing = false
+                                    error = "촬영 이미지를 열지 못했습니다. 다시 촬영하세요."
+                                } finally {
+                                    image.close()
+                                }
                             }
                             override fun onError(exception: ImageCaptureException) {
                                 processing = false; error = "사진 촬영에 실패했습니다."
@@ -144,4 +187,18 @@ private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit) {
             }
         }
     }
+}
+
+private fun rotateBitmap(source: Bitmap, degrees: Int): Bitmap {
+    if (degrees == 0) return source
+    val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
+    return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+}
+
+private fun cropBitmap(source: Bitmap, left: Float, top: Float, right: Float, bottom: Float): Bitmap {
+    val x = (source.width * left).roundToInt().coerceIn(0, source.width - 1)
+    val y = (source.height * top).roundToInt().coerceIn(0, source.height - 1)
+    val cropRight = (source.width * right).roundToInt().coerceIn(x + 1, source.width)
+    val cropBottom = (source.height * bottom).roundToInt().coerceIn(y + 1, source.height)
+    return Bitmap.createBitmap(source, x, y, cropRight - x, cropBottom - y)
 }

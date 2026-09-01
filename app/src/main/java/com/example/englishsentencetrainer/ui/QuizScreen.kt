@@ -16,7 +16,7 @@ import com.example.englishsentencetrainer.quiz.QuizViewModel
 @Composable
 fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
     if (viewModel.completed) {
-        Column(Modifier.fillMaxSize().padding(24.dp), Arrangement.Center, Alignment.CenterHorizontally) {
+        Column(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp), Arrangement.Center, Alignment.CenterHorizontally) {
             Text("학습 완료", fontSize = 34.sp)
             Spacer(Modifier.height(24.dp))
             Text("총 문장 수: ${viewModel.sentences.size}", fontSize = 22.sp)
@@ -27,7 +27,9 @@ fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
         return
     }
 
-    Column(Modifier.fillMaxSize().padding(20.dp)) {
+    Column(
+        Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp)
+    ) {
         Text("${viewModel.currentIndex + 1} / ${viewModel.sentences.size}", fontSize = 22.sp)
         Spacer(Modifier.height(20.dp))
         Text("답안", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -45,21 +47,20 @@ fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
         when (viewModel.answerState) {
             AnswerState.CORRECT -> Text("정답!", color = MaterialTheme.colorScheme.primary, fontSize = 24.sp)
             AnswerState.WRONG -> Text("다시 시도", color = MaterialTheme.colorScheme.error, fontSize = 24.sp)
-            else -> Spacer(Modifier.height(30.dp))
+            else -> Text(
+                if (viewModel.available.isEmpty()) "순서를 확인한 뒤 정답을 확인하세요."
+                else "아래 단어를 눌러 문장을 완성하세요.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
-        HorizontalDivider(Modifier.padding(vertical = 12.dp))
-        FlowRow(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            viewModel.available.forEach { word ->
-                OutlinedButton(onClick = { viewModel.select(word) }) { Text(word.text, fontSize = 20.sp) }
-            }
-        }
+        Spacer(Modifier.height(8.dp))
         if (viewModel.answerState == AnswerState.CORRECT) {
             Button(onClick = viewModel::next, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-                Text("다음 문장", fontSize = 20.sp)
+                Text(
+                    if (viewModel.currentIndex == viewModel.sentences.lastIndex) "학습 완료" else "다음 문장",
+                    fontSize = 20.sp
+                )
             }
         } else {
             Button(
@@ -67,6 +68,22 @@ fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
                 enabled = viewModel.available.isEmpty(),
                 modifier = Modifier.fillMaxWidth().height(60.dp)
             ) { Text("정답 확인", fontSize = 20.sp) }
+        }
+        HorizontalDivider(Modifier.padding(vertical = 20.dp))
+        Text(
+            if (viewModel.available.isEmpty()) "모든 단어를 선택했습니다." else "남은 단어 ${viewModel.available.size}개",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 18.sp
+        )
+        Spacer(Modifier.height(10.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            viewModel.available.forEach { word ->
+                OutlinedButton(onClick = { viewModel.select(word) }) { Text(word.text, fontSize = 20.sp) }
+            }
         }
     }
 }
