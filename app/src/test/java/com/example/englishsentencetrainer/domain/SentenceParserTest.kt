@@ -53,4 +53,31 @@ class SentenceParserTest {
             SentenceParser.parse(text)
         )
     }
+
+    @Test fun removesKoreanTextBeforeCreatingQuestions() {
+        val text = "Many people 사람들은 support 응원한다 sports teams. 이것은 설명입니다."
+        assertEquals(
+            listOf("Many people support sports teams."),
+            SentenceParser.parse(text)
+        )
+    }
+
+    @Test fun removesRoundAndSquareBracketAnnotations() {
+        val text = "People cheer for teams (bask in reflected glory) every day. They build [social identity theory] strong communities."
+        assertEquals(
+            listOf(
+                "People cheer for teams every day.",
+                "They build strong communities."
+            ),
+            SentenceParser.parse(text)
+        )
+    }
+
+    @Test fun removesNestedAndFullWidthBracketAnnotations() {
+        val text = "People (ignore [all of this]) support teams. Fans （한국어 설명） cheer loudly."
+        assertEquals(
+            listOf("People support teams.", "Fans cheer loudly."),
+            SentenceParser.parse(text)
+        )
+    }
 }

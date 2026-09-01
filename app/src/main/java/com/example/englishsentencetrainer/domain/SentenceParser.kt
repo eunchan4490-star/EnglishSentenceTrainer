@@ -5,12 +5,24 @@ object SentenceParser {
     private const val MIN_COMMA_PART_WORDS = 3
     private val sentenceRegex = Regex("[^.!?\\n]+[.!?]+|[^.!?\\n]+(?:\\n|$)")
     private val whitespace = Regex("\\s+")
+    private val horizontalWhitespace = Regex("[\\t\\u000B\\f\\r ]+")
+    private val bracketedAnnotation = Regex("\\([^()]*\\)|\\[[^\\[\\]]*]|（[^（）]*）|［[^［］]*］")
+    private val koreanText = Regex("[\\u1100-\\u11FF\\u3130-\\u318F\\uAC00-\\uD7AF]+")
 
-    fun parse(text: String): List<String> = sentenceRegex.findAll(markLikelyMissingPeriods(text))
+    fun parse(text: String): List<String> = sentenceRegex.findAll(markLikelyMissingPeriods(removeIgnoredText(text)))
         .map { it.value.trim().replace(whitespace, " ") }
         .filter { tokenize(it).size > 1 }
         .flatMap(::splitLongSentenceAtClausePunctuation)
         .toList()
+
+    private fun removeIgnoredText(text: String): String {
+        var cleaned = text
+        do {
+            val previous = cleaned
+            cleaned = cleaned.replace(bracketedAnnotation, " ")
+        } while (cleaned != previous)
+        return cleaned.replace(koreanText, " ").replace(horizontalWhitespace, " ").trim()
+    }
 
     private fun markLikelyMissingPeriods(text: String): String {
         val lines = text.lines().map(String::trim).filter(String::isNotBlank)
