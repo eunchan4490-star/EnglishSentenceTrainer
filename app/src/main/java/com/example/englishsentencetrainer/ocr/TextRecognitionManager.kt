@@ -6,6 +6,7 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import com.example.englishsentencetrainer.japanese.JapaneseTextSanitizer
 
 enum class OcrMode { ENGLISH, JAPANESE }
 
@@ -44,19 +45,9 @@ class TextRecognitionManager(private val mode: OcrMode = OcrMode.ENGLISH) {
         return unusual == 0 && letters.toFloat() / value.length >= 0.45f
     }
 
-    private fun extractJapaneseText(result: Text): String = result.textBlocks
-        .flatMap { it.lines }
-        .mapNotNull { line ->
-            line.elements
-                .map { it.text.trim() }
-                .filter { value -> value.any(::isJapaneseCharacter) && value.none { it in '\uAC00'..'\uD7A3' } }
-                .joinToString(" ")
-                .takeIf(String::isNotBlank)
-        }
-        .joinToString("\n")
-
-    private fun isJapaneseCharacter(char: Char): Boolean =
-        char in '\u3040'..'\u30FF' || char in '\u4E00'..'\u9FFF'
+    private fun extractJapaneseText(result: Text): String = JapaneseTextSanitizer.cleanLines(
+        result.textBlocks.flatMap { block -> block.lines.map { it.text } }
+    )
 
     fun close() = recognizer.close()
 }

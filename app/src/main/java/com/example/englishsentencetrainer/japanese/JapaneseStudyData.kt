@@ -19,10 +19,8 @@ object JapaneseStudyData {
             "バ:ba ビ:bi ブ:bu ベ:be ボ:bo パ:pa ピ:pi プ:pu ペ:pe ポ:po"
     )
 
-    fun textbookQuestions(text: String): List<JapaneseQuestion> = text
-        .split(Regex("[\\s,，、。・/]+"))
-        .map(String::trim)
-        .filter { word -> word.isNotBlank() && word.any(::isJapaneseCharacter) }
+    fun textbookQuestions(text: String): List<JapaneseQuestion> = text.lines()
+        .mapNotNull(JapaneseTextSanitizer::cleanHeadword)
         .distinct()
         .map { JapaneseQuestion(prompt = it, answer = it) }
 
@@ -30,7 +28,4 @@ object JapaneseStudyData {
         val (answer, reading) = item.split(':', limit = 2)
         JapaneseQuestion(prompt = reading, answer = answer)
     }
-
-    private fun isJapaneseCharacter(char: Char): Boolean =
-        char in '\u3040'..'\u30FF' || char in '\u4E00'..'\u9FFF'
 }

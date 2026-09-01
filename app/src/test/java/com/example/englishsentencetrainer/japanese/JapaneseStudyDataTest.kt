@@ -19,8 +19,28 @@ class JapaneseStudyDataTest {
 
     @Test
     fun `textbook parser keeps Japanese words and removes duplicates`() {
-        val result = JapaneseStudyData.textbookQuestions("ねこ, cat 학교 テレビ ねこ。学校")
+        val result = JapaneseStudyData.textbookQuestions("ねこ\ncat 학교\nテレビ\nねこ\n学校")
 
         assertEquals(listOf("ねこ", "テレビ", "学校"), result.map { it.answer })
+    }
+
+    @Test
+    fun `textbook parser removes Korean and bracketed meanings`() {
+        val text = "あう(会う) 만나다\nあさ[朝] 아침\nアニメ(動畫) 애니메이션"
+
+        assertEquals(
+            listOf("あう", "あさ", "アニメ"),
+            JapaneseStudyData.textbookQuestions(text).map { it.answer }
+        )
+    }
+
+    @Test
+    fun `textbook parser keeps only leading Japanese headword from OCR noise`() {
+        val text = "あがる上がる)己フに\n+あさく_さ浅草)0A早!"
+
+        assertEquals(
+            listOf("あがる", "あさく"),
+            JapaneseStudyData.textbookQuestions(text).map { it.answer }
+        )
     }
 }
