@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MainScreen(onCamera: () -> Unit, onSample: () -> Unit) {
+fun MainScreen(hasSavedText: Boolean, onCamera: () -> Unit, onSavedText: () -> Unit, onSample: () -> Unit) {
     Column(
         Modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -20,6 +20,12 @@ fun MainScreen(onCamera: () -> Unit, onSample: () -> Unit) {
         Spacer(Modifier.height(48.dp))
         Button(onClick = onCamera, modifier = Modifier.fillMaxWidth().height(64.dp)) {
             Text("본문 촬영하기", fontSize = 20.sp)
+        }
+        if (hasSavedText) {
+            Spacer(Modifier.height(16.dp))
+            Button(onClick = onSavedText, modifier = Modifier.fillMaxWidth().height(64.dp)) {
+                Text("저장된 본문 다시 학습", fontSize = 20.sp)
+            }
         }
         Spacer(Modifier.height(16.dp))
         OutlinedButton(onClick = onSample, modifier = Modifier.fillMaxWidth().height(56.dp)) {
