@@ -31,4 +31,26 @@ class SentenceParserTest {
             SentenceParser.parse(text)
         )
     }
+
+    @Test fun splitsLongSentenceAtColonSoTranslationAndWordChoicesMatch() {
+        val text = "There are also two psychological theories that might explain why we cheer for a sports team: basking in reflected glory and optimal distinctiveness."
+        assertEquals(
+            listOf(
+                "There are also two psychological theories that might explain why we cheer for a sports team:",
+                "basking in reflected glory and optimal distinctiveness."
+            ),
+            SentenceParser.parse(text)
+        )
+    }
+
+    @Test fun splitsLongSentenceAtSemicolon() {
+        val text = "Many people support the same team throughout their entire lives; this shared loyalty can create a powerful sense of community."
+        assertEquals(
+            listOf(
+                "Many people support the same team throughout their entire lives;",
+                "this shared loyalty can create a powerful sense of community."
+            ),
+            SentenceParser.parse(text)
+        )
+    }
 }

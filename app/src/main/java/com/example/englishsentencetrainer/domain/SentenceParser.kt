@@ -9,7 +9,7 @@ object SentenceParser {
     fun parse(text: String): List<String> = sentenceRegex.findAll(markLikelyMissingPeriods(text))
         .map { it.value.trim().replace(whitespace, " ") }
         .filter { tokenize(it).size > 1 }
-        .flatMap(::splitLongSentenceAtCommas)
+        .flatMap(::splitLongSentenceAtClausePunctuation)
         .toList()
 
     private fun markLikelyMissingPeriods(text: String): String {
@@ -26,9 +26,11 @@ object SentenceParser {
         }
     }
 
-    private fun splitLongSentenceAtCommas(sentence: String): Sequence<String> {
-        if (tokenize(sentence).size <= LONG_SENTENCE_WORDS || ',' !in sentence) return sequenceOf(sentence)
-        val parts = sentence.split(Regex("(?<=,)\\s+")).map(String::trim)
+    private fun splitLongSentenceAtClausePunctuation(sentence: String): Sequence<String> {
+        if (tokenize(sentence).size <= LONG_SENTENCE_WORDS || sentence.none { it in ",:;" }) {
+            return sequenceOf(sentence)
+        }
+        val parts = sentence.split(Regex("(?<=[,:;])\\s+")).map(String::trim)
         return if (parts.size > 1 && parts.all { tokenize(it).size >= MIN_COMMA_PART_WORDS })
             parts.asSequence()
         else sequenceOf(sentence)
