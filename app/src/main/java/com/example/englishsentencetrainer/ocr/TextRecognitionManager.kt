@@ -5,13 +5,21 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 
-class TextRecognitionManager {
-    private val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+enum class OcrMode { ENGLISH, JAPANESE }
+
+class TextRecognitionManager(private val mode: OcrMode = OcrMode.ENGLISH) {
+    private val recognizer = when (mode) {
+        OcrMode.ENGLISH -> TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+        OcrMode.JAPANESE -> TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
+    }
 
     fun recognize(bitmap: Bitmap, onSuccess: (String) -> Unit, onError: (Exception) -> Unit) {
         recognizer.process(InputImage.fromBitmap(bitmap, 0))
-            .addOnSuccessListener { onSuccess(extractEnglishText(it)) }
+            .addOnSuccessListener {
+                onSuccess(if (mode == OcrMode.ENGLISH) extractEnglishText(it) else extractJapaneseText(it))
+            }
             .addOnFailureListener(onError)
     }
 
@@ -35,6 +43,20 @@ class TextRecognitionManager {
         val unusual = value.count { !it.isLetterOrDigit() && it !in "'’.,!?;:()-/\"" }
         return unusual == 0 && letters.toFloat() / value.length >= 0.45f
     }
+
+    private fun extractJapaneseText(result: Text): String = result.textBlocks
+        .flatMap { it.lines }
+        .mapNotNull { line ->
+            line.elements
+                .map { it.text.trim() }
+                .filter { value -> value.any(::isJapaneseCharacter) && value.none { it in '\uAC00'..'\uD7A3' } }
+                .joinToString(" ")
+                .takeIf(String::isNotBlank)
+        }
+        .joinToString("\n")
+
+    private fun isJapaneseCharacter(char: Char): Boolean =
+        char in '\u3040'..'\u30FF' || char in '\u4E00'..'\u9FFF'
 
     fun close() = recognizer.close()
 }

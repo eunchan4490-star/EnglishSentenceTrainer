@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.englishsentencetrainer"
         minSdk = 23
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = 6
+        versionName = "0.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
@@ -44,6 +44,8 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.4.1")
     implementation("androidx.camera:camera-view:1.4.1")
     implementation("com.google.mlkit:text-recognition-korean:16.0.1")
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+    implementation("com.google.mlkit:digital-ink-recognition:19.0.0")
     implementation("com.google.mlkit:translate:17.0.3")
     testImplementation("junit:junit:4.13.2")
 }

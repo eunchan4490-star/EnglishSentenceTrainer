@@ -28,10 +28,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.englishsentencetrainer.ocr.TextRecognitionManager
+import com.example.englishsentencetrainer.ocr.OcrMode
 import kotlin.math.roundToInt
 
 @Composable
-fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit) {
+fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit, mode: OcrMode = OcrMode.ENGLISH) {
     val context = LocalContext.current
     var granted by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
@@ -45,16 +46,16 @@ fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit) {
             TextButton(onClick = onBack) { Text("처음으로") }
         }
     } else {
-        CameraPreview(onRecognized, onBack)
+        CameraPreview(onRecognized, onBack, mode)
     }
 }
 
 @Composable
-private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit) {
+private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit, mode: OcrMode) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build() }
-    val recognizer = remember { TextRecognitionManager() }
+    val recognizer = remember(mode) { TextRecognitionManager(mode) }
     var processing by remember { mutableStateOf(false) }
     var awaitingNextAction by remember { mutableStateOf(false) }
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -91,7 +92,7 @@ private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit) {
                         cropped.recycle()
                         bitmap.recycle()
                         capturedBitmap = null
-                        if (text.isBlank()) error = "선택 영역에서 영어 본문을 찾지 못했습니다. 다시 촬영하세요."
+                        if (text.isBlank()) error = "선택 영역에서 ${if (mode == OcrMode.ENGLISH) "영어 본문" else "일본어 단어"}를 찾지 못했습니다. 다시 촬영하세요."
                         else {
                             recognizedPages.add(text.trim())
                             awaitingNextAction = true

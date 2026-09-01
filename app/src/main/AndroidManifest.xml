@@ -7,10 +7,14 @@
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <application
         android:allowBackup="false"
-        android:label="영어 본문 암기"
+        android:label="본문 암기 배틀"
         android:supportsRtl="true"
         android:theme="@style/Theme.EnglishSentenceTrainer">
-        <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize"
+            android:screenOrientation="unspecified"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
