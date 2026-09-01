@@ -24,7 +24,7 @@ import java.text.Normalizer
 
 @Composable
 fun JapaneseHandwritingQuizScreen(
-    questions: List<JapaneseQuestion>, title: String, showTarget: Boolean, onHome: () -> Unit
+    questions: List<JapaneseQuestion>, title: String, showTarget: Boolean, onBack: () -> Unit, onHome: () -> Unit
 ) {
     val activity = LocalActivity.current
     DisposableEffect(activity) {
@@ -44,7 +44,7 @@ fun JapaneseHandwritingQuizScreen(
     DisposableEffect(Unit) { onDispose { manager.close() } }
 
     if (completed) {
-        CompletionBattleScreen(questions.size, combo, onHome)
+        CompletionBattleScreen(questions.size, combo, onBack, onHome)
         return
     }
 
@@ -55,6 +55,7 @@ fun JapaneseHandwritingQuizScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            AppNavigationButtons(onBack, onHome)
             Text(title, fontSize = 19.sp)
             Spacer(Modifier.weight(1f))
             Text("영웅 ${"♥".repeat(heroHp)}", color = Color(0xFFC62828), fontSize = 18.sp)
@@ -144,7 +145,7 @@ fun JapaneseHandwritingQuizScreen(
 }
 
 @Composable
-private fun CompletionBattleScreen(total: Int, combo: Int, onHome: () -> Unit) {
+private fun CompletionBattleScreen(total: Int, combo: Int, onBack: () -> Unit, onHome: () -> Unit) {
     Row(
         Modifier.fillMaxSize().safeDrawingPadding().background(Color(0xFFFFFBFF)).padding(24.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -154,11 +155,12 @@ private fun CompletionBattleScreen(total: Int, combo: Int, onHome: () -> Unit) {
             modifier = Modifier.weight(1.2f).fillMaxHeight(), contentScale = ContentScale.Fit
         )
         Column(Modifier.weight(0.8f), horizontalAlignment = Alignment.CenterHorizontally) {
+            AppNavigationButtons(onBack, onHome)
             Text("보스 처치!", fontSize = 36.sp, color = Color(0xFF5E35B1))
             Text("총 ${total}문제 완료", fontSize = 21.sp)
             Text("마지막 콤보 $combo", fontSize = 18.sp)
             Spacer(Modifier.height(18.dp))
-            Button(onClick = onHome, modifier = Modifier.fillMaxWidth().height(54.dp)) { Text("일본어 메뉴로") }
+            Button(onClick = onHome, modifier = Modifier.fillMaxWidth().height(54.dp)) { Text("홈으로") }
         }
     }
 }

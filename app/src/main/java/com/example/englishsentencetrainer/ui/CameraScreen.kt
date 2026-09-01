@@ -32,7 +32,7 @@ import com.example.englishsentencetrainer.ocr.OcrMode
 import kotlin.math.roundToInt
 
 @Composable
-fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit, mode: OcrMode = OcrMode.ENGLISH) {
+fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit, onHome: () -> Unit, mode: OcrMode = OcrMode.ENGLISH) {
     val context = LocalContext.current
     var granted by remember { mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted = it }
@@ -43,15 +43,15 @@ fun CameraScreen(onRecognized: (String) -> Unit, onBack: () -> Unit, mode: OcrMo
             Text("본문을 촬영하려면 카메라 권한이 필요합니다.", fontSize = 20.sp)
             Spacer(Modifier.height(20.dp))
             Button(onClick = { launcher.launch(Manifest.permission.CAMERA) }) { Text("카메라 권한 허용") }
-            TextButton(onClick = onBack) { Text("처음으로") }
+            AppNavigationButtons(onBack, onHome)
         }
     } else {
-        CameraPreview(onRecognized, onBack, mode)
+        CameraPreview(onRecognized, onBack, onHome, mode)
     }
 }
 
 @Composable
-private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit, mode: OcrMode) {
+private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit, onHome: () -> Unit, mode: OcrMode) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build() }
@@ -128,8 +128,8 @@ private fun CameraPreview(onRecognized: (String) -> Unit, onBack: () -> Unit, mo
             Modifier.align(Alignment.Center).fillMaxWidth(0.9f).fillMaxHeight(0.68f)
                 .border(BorderStroke(2.dp, Color.White), MaterialTheme.shapes.small)
         )
-        TextButton(onClick = onBack, modifier = Modifier.align(Alignment.TopStart).padding(12.dp)) {
-            Text("← 취소", color = Color.White, fontSize = 18.sp)
+        Row(modifier = Modifier.align(Alignment.TopStart).padding(12.dp)) {
+            AppNavigationButtons(onBack, onHome, Color.White)
         }
         Text(
             if (awaitingNextAction) "OCR 완료" else "페이지가 흰 선 안에 들어오게 촬영하세요",

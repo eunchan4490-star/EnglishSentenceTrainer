@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun JapaneseMenuScreen(onBack: () -> Unit, onCamera: () -> Unit, onHiragana: () -> Unit, onKatakana: () -> Unit) {
     Column(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp)) {
-        TextButton(onClick = onBack) { Text("← 처음으로") }
+        AppNavigationButtons(onBack, onBack)
         Text("일본어 손글씨 암기", fontSize = 30.sp)
         Text("음을 보고 화면에 직접 써 보세요.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(36.dp))

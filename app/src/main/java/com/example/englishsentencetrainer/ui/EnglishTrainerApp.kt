@@ -29,6 +29,8 @@ fun EnglishTrainerApp(quizViewModel: QuizViewModel = viewModel()) {
     var japaneseQuestions by remember { mutableStateOf<List<JapaneseQuestion>>(emptyList()) }
     var japaneseTitle by remember { mutableStateOf("") }
     var showJapaneseTarget by remember { mutableStateOf(false) }
+    var editBackScreen by remember { mutableStateOf(Screen.MAIN) }
+    var japaneseQuizBackScreen by remember { mutableStateOf(Screen.JAPANESE_MENU) }
 
     MaterialTheme {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -36,17 +38,19 @@ fun EnglishTrainerApp(quizViewModel: QuizViewModel = viewModel()) {
                 Screen.MAIN -> MainScreen(
                     onCamera = { screen = Screen.CAMERA },
                     hasSavedText = savedText.isNotBlank(),
-                    onSavedText = { ocrText = savedText; screen = Screen.EDIT },
-                    onSample = { ocrText = SAMPLE_TEXT; screen = Screen.EDIT },
+                    onSavedText = { ocrText = savedText; editBackScreen = Screen.MAIN; screen = Screen.EDIT },
+                    onSample = { ocrText = SAMPLE_TEXT; editBackScreen = Screen.MAIN; screen = Screen.EDIT },
                     onJapanese = { screen = Screen.JAPANESE_MENU }
                 )
                 Screen.CAMERA -> CameraScreen(
-                    onRecognized = { ocrText = it; screen = Screen.EDIT },
-                    onBack = { screen = Screen.MAIN }
+                    onRecognized = { ocrText = it; editBackScreen = Screen.CAMERA; screen = Screen.EDIT },
+                    onBack = { screen = Screen.MAIN },
+                    onHome = { screen = Screen.MAIN }
                 )
                 Screen.EDIT -> OcrEditScreen(
                     initialText = ocrText,
-                    onBack = { screen = Screen.MAIN },
+                    onBack = { screen = editBackScreen },
+                    onHome = { screen = Screen.MAIN },
                     onStart = { text ->
                         val started = quizViewModel.start(text)
                         if (started) {
@@ -59,6 +63,7 @@ fun EnglishTrainerApp(quizViewModel: QuizViewModel = viewModel()) {
                 )
                 Screen.QUIZ -> QuizScreen(
                     viewModel = quizViewModel,
+                    onBack = { screen = Screen.EDIT },
                     onHome = { screen = Screen.MAIN }
                 )
                 Screen.JAPANESE_MENU -> JapaneseMenuScreen(
@@ -68,27 +73,32 @@ fun EnglishTrainerApp(quizViewModel: QuizViewModel = viewModel()) {
                         japaneseQuestions = JapaneseStudyData.hiragana.shuffled()
                         japaneseTitle = "히라가나"
                         showJapaneseTarget = false
+                        japaneseQuizBackScreen = Screen.JAPANESE_MENU
                         screen = Screen.JAPANESE_QUIZ
                     },
                     onKatakana = {
                         japaneseQuestions = JapaneseStudyData.katakana.shuffled()
                         japaneseTitle = "가타카나"
                         showJapaneseTarget = false
+                        japaneseQuizBackScreen = Screen.JAPANESE_MENU
                         screen = Screen.JAPANESE_QUIZ
                     }
                 )
                 Screen.JAPANESE_CAMERA -> CameraScreen(
                     onRecognized = { japaneseText = it; screen = Screen.JAPANESE_EDIT },
                     onBack = { screen = Screen.JAPANESE_MENU },
+                    onHome = { screen = Screen.MAIN },
                     mode = OcrMode.JAPANESE
                 )
                 Screen.JAPANESE_EDIT -> JapaneseWordEditScreen(
                     initialText = japaneseText,
-                    onBack = { screen = Screen.JAPANESE_MENU },
+                    onBack = { screen = Screen.JAPANESE_CAMERA },
+                    onHome = { screen = Screen.MAIN },
                     onStart = {
                         japaneseQuestions = it.shuffled()
                         japaneseTitle = "교과서 단어"
                         showJapaneseTarget = true
+                        japaneseQuizBackScreen = Screen.JAPANESE_EDIT
                         screen = Screen.JAPANESE_QUIZ
                     }
                 )
@@ -96,7 +106,8 @@ fun EnglishTrainerApp(quizViewModel: QuizViewModel = viewModel()) {
                     questions = japaneseQuestions,
                     title = japaneseTitle,
                     showTarget = showJapaneseTarget,
-                    onHome = { screen = Screen.JAPANESE_MENU }
+                    onBack = { screen = japaneseQuizBackScreen },
+                    onHome = { screen = Screen.MAIN }
                 )
             }
         }

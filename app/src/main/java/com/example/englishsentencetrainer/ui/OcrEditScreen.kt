@@ -10,11 +10,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun OcrEditScreen(initialText: String, onBack: () -> Unit, onStart: (String) -> Boolean) {
+fun OcrEditScreen(initialText: String, onBack: () -> Unit, onHome: () -> Unit, onStart: (String) -> Boolean) {
     var text by remember(initialText) { mutableStateOf(initialText) }
     var error by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        TextButton(onClick = onBack) { Text("← 처음으로") }
+        AppNavigationButtons(onBack, onHome)
         Text("OCR 결과 확인", fontSize = 26.sp)
         Text("잘못 인식된 부분을 수정하세요.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))

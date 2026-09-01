@@ -15,7 +15,7 @@ import com.example.englishsentencetrainer.translation.TranslationManager
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
+fun QuizScreen(viewModel: QuizViewModel, onBack: () -> Unit, onHome: () -> Unit) {
     val translationManager = remember { TranslationManager() }
     DisposableEffect(Unit) { onDispose { translationManager.close() } }
     if (viewModel.completed) {
@@ -43,6 +43,7 @@ fun QuizScreen(viewModel: QuizViewModel, onHome: () -> Unit) {
     Column(
         Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp)
     ) {
+        AppNavigationButtons(onBack, onHome)
         Text("${viewModel.currentIndex + 1} / ${viewModel.sentences.size}", fontSize = 22.sp)
         Spacer(Modifier.height(12.dp))
         Surface(

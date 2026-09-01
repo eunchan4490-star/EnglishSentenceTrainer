@@ -12,11 +12,11 @@ import com.example.englishsentencetrainer.japanese.JapaneseQuestion
 import com.example.englishsentencetrainer.japanese.JapaneseStudyData
 
 @Composable
-fun JapaneseWordEditScreen(initialText: String, onBack: () -> Unit, onStart: (List<JapaneseQuestion>) -> Unit) {
+fun JapaneseWordEditScreen(initialText: String, onBack: () -> Unit, onHome: () -> Unit, onStart: (List<JapaneseQuestion>) -> Unit) {
     var text by remember(initialText) { mutableStateOf(initialText) }
     var error by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp)) {
-        TextButton(onClick = onBack) { Text("← 일본어 메뉴") }
+        AppNavigationButtons(onBack, onHome)
         Text("일본어 단어 확인", fontSize = 27.sp)
         Text("문제가 아닌 단어는 지우고, 연습할 단어만 남기세요.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(14.dp))
